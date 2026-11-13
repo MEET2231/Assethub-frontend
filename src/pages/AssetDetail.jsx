@@ -46,6 +46,30 @@ function Meta({ label, value, mono }) {
   );
 }
 
+function parseCustomValues(val) {
+  if (!val) return null;
+  if (typeof val === 'object') {
+    if (typeof val.value === 'string') {
+      try {
+        const parsed = JSON.parse(val.value);
+        return typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+      } catch {
+        return null;
+      }
+    }
+    if (!Array.isArray(val)) return val;
+  }
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val);
+      return typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 export default function AssetDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -206,16 +230,20 @@ export default function AssetDetail() {
         </div>
 
         {/* Custom fields */}
-        {asset.custom_values && Object.keys(asset.custom_values).length > 0 && (
-          <div className="mt-5 pt-4 border-t border-slate-100">
-            <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-3">Custom Attributes</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {Object.entries(asset.custom_values).map(([k, v]) => (
-                <Meta key={k} label={k} value={String(v)} />
-              ))}
+        {(() => {
+          const customValues = parseCustomValues(asset.custom_values);
+          if (!customValues || Object.keys(customValues).length === 0) return null;
+          return (
+            <div className="mt-5 pt-4 border-t border-slate-100">
+              <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-3">Custom Attributes</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {Object.entries(customValues).map(([k, v]) => (
+                  <Meta key={k} label={k} value={String(v)} />
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Current status bar (if allocated) */}
